@@ -1,12 +1,13 @@
 class Downloader {
   constructor(id) {
+    // console.log(id + ':' + webFrame.routingId)
     this.id = id;
     this.el = document.querySelector('#' + this.id);
     // テキスト＿URL
     this.url = this.el.querySelector('.item_url');
 
     // テキスト＿保存フォルダ
-    this.input_text_folder = this.el.querySelector('.item-config .input-text-folder').value;
+    this.input_text_folder = this.el.querySelector('.input-text-folder');
 
     // セレクタ＿画質
     this.quality = this.el.querySelector('.input-select-quality');
@@ -22,17 +23,25 @@ class Downloader {
 
     // ボタン＿保存フォルダ選択
     this.el.querySelector('.item-config .btn-saved-folder').addEventListener('click', (e) => {
-      onSavedFolder();
+      this.onSavedFolder();
     });
 
     // ボタン＿ダウンロード開始
     this.el.querySelector('.btn-start-download').addEventListener('click', (e) => {
-      onStartDownload();
+      this.onStartDownload();
     });
 
     // ボタン＿フォルダを開く
     this.el.querySelector('.btn-open-folder').addEventListener('click', (e) => {
-      onOpenFolder();
+      this.onOpenFolder();
+    });
+
+  }
+
+  searchVideo(url) {
+    ipcRenderer.send('url:search', url);
+    ipcRenderer.once('info:get', (event, videoInfo) => {
+      this.setValue(videoInfo);
     });
   }
 
@@ -45,7 +54,12 @@ class Downloader {
     setSelectOptions(this.quality, videoInfo.quality);
   }
 
-  onSavedFolder() { }
+  onSavedFolder() {
+    ipcRenderer.send('folder:save');
+    ipcRenderer.once('folder:selected', (event, folder_path) => {
+      this.input_text_folder.value = folder_path;
+    });
+  }
   onStartDownload() { }
   onOpenFolder() { }
 
