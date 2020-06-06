@@ -1,0 +1,8 @@
+node_modules
+yarn-error.log
+package-lock.json
+yarn.lock
+app/app.js
+app/app.js.map
+dist/*
+sample.png
