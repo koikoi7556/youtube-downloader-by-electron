@@ -8,17 +8,16 @@ class Downloader {
 
     // テキスト＿保存フォルダ
     this.input_text_folder = this.el.querySelector('.input-text-folder');
-    
+
     // セレクタ＿画質
     this.quality = this.el.querySelector('.input-select-quality');
     console.log(this.quality)
     // 画像＿サムネイル画像
     this.thumbnail = this.el.querySelector('.item-thumbnail img');
 
-    // テキスト＿動画タイトル，時間，容量
+    // テキスト＿動画タイトル，時間
     this.title = this.el.querySelector('.item-video p');
     this.time_length = this.el.querySelectorAll('.item-video small')[0];
-    this.file_size = this.el.querySelectorAll('.item-video small')[1];
 
     // テキスト＿ダウンロード済み
     this.downloaded = this.el.querySelector('.item-progress small')
@@ -47,13 +46,12 @@ class Downloader {
     });
   }
 
-  setValue(videoInfo) {
-    this.url.innerText = videoInfo.url;
-    this.thumbnail.src = videoInfo.thumbnail;
-    this.title.innerText = videoInfo.title;
-    this.time_length.innerText = videoInfo.time_length;
-    this.file_size.innerText = videoInfo.file_size;
-    setSelectOptions(this.quality, videoInfo.quality);
+  setValue(video_info) {
+    this.url.innerText = video_info.url;
+    this.thumbnail.src = video_info.thumbnail;
+    this.title.innerText = video_info.title;
+    this.time_length.innerText = video_info.time_length;
+    setSelectOptions(this.quality, video_info.quality_text, video_info.qualityLabel);
   }
 
   onSavedFolder() {
@@ -90,12 +88,13 @@ class Downloader {
 }
 
 // select要素に複数オプションを追加
-const setSelectOptions = (select_el, options) => {
-  for (option of options) {
+const setSelectOptions = (select_el, texts, values) => {
+  for (let i = 0; i < texts.length; i++) {
     const option_el = document.createElement('option');
-    option_el.text = option;
-    option_el.value = option;
+    option_el.text = texts[i];
+    option_el.value = values[i];
     select_el.appendChild(option_el);
+
   }
 }
 
