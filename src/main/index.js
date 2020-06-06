@@ -1,7 +1,10 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const open = require('open');
 const path = require('path');
+
 let win;
 let i = 0;
+
 app.on('ready', () => {
   win = new BrowserWindow({
     title: 'youtube downloader',
@@ -65,7 +68,6 @@ ipcMain.on('url:search', (event, url) => {
 
 // ボタン＿保存フォルダ選択
 ipcMain.on('folder:save', (event) => {
-  console.info('Message came from frameId:', event.frameId)
   let folder_path = dialog.showOpenDialogSync(win, {
     properties: ['openDirectory']
   });
@@ -73,4 +75,15 @@ ipcMain.on('folder:save', (event) => {
 });
 
 // ボタン＿ダウンロード開始
+ipcMain.on('download:start', (event, id, folder_path) => {
+  win.webContents.send('download:progress' + id, downloaded, total);
+  win.webContents.send('download:end' + id);
+});
+
 // ボタン＿フォルダを開く
+ipcMain.on('folder:open', (event, folder_path) => {
+  folder_path = path.resolve(__dirname, folder_path);
+  (async () => {
+    await open(folder_path);
+  })();
+});

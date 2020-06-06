@@ -8,7 +8,7 @@ class Downloader {
 
     // テキスト＿保存フォルダ
     this.input_text_folder = this.el.querySelector('.input-text-folder');
-
+    
     // セレクタ＿画質
     this.quality = this.el.querySelector('.input-select-quality');
     console.log(this.quality)
@@ -20,6 +20,8 @@ class Downloader {
     this.time_length = this.el.querySelectorAll('.item-video small')[0];
     this.file_size = this.el.querySelectorAll('.item-video small')[1];
 
+    // テキスト＿ダウンロード済み
+    this.downloaded = this.el.querySelector('.item-progress small')
 
     // ボタン＿保存フォルダ選択
     this.el.querySelector('.item-config .btn-saved-folder').addEventListener('click', (e) => {
@@ -40,8 +42,8 @@ class Downloader {
 
   searchVideo(url) {
     ipcRenderer.send('url:search', url);
-    ipcRenderer.once('info:get', (event, videoInfo) => {
-      this.setValue(videoInfo);
+    ipcRenderer.once('info:get', (event, video_info) => {
+      this.setValue(video_info);
     });
   }
 
@@ -57,11 +59,33 @@ class Downloader {
   onSavedFolder() {
     ipcRenderer.send('folder:save');
     ipcRenderer.once('folder:selected', (event, folder_path) => {
-      this.input_text_folder.value = folder_path;
+      if (folder_path !== undefined) {
+        this.input_text_folder.value = folder_path;
+      }
     });
   }
-  onStartDownload() { }
-  onOpenFolder() { }
+
+  // 要素を入れ替えてダウンロード開始
+  onStartDownload() {
+    this.el.querySelector('.btn-start-download').classList.add('d-none');
+    this.el.querySelector('.btn-open-folder').classList.remove('d-none');
+    this.el.querySelector('.item-progress').classList.remove('d-none');
+
+    // const video_config = 
+    // ipcRenderer.send('download:start', this.id, this.input_text_folder.value)
+    // ipcRenderer.on('download:progress' + this.id, (event, downloaded, total) => {
+    //   const percent = downloaded / total;
+    //   this.downloaded.innerText = `(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)`
+    // });
+    // ipcRenderer.once('download:end', (event) => {
+    //   ipcRenderer.removeAllLitener('download:progress' + this.id);
+
+    // });
+  }
+
+  onOpenFolder() { 
+    ipcRenderer.send('folder:open', this.input_text_folder.value);
+  }
 
 }
 
