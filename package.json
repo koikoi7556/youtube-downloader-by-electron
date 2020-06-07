@@ -1,7 +1,7 @@
 {
-  "name": "electron-ytdl",
+  "name": "YoutubeDownloder",
   "version": "1.0.0",
-  "description": "",
+  "description": "Youtubeの動画をDLできるGUIソフト",
   "main": "src/main/index.js",
   "scripts": {
     "electron": "electron .",
@@ -10,7 +10,11 @@
     "dist": "webpack --mode=production && electron-builder",
     "pack": "electron-builder --dir"
   },
-  "author": "",
+  "author": {
+    "name": "koijammer",
+    "email": "koikoi7556@gmail.com",
+    "url": "https://twitter.com/koijammer"
+  },
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.9.6",

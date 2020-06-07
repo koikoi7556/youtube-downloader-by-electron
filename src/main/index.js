@@ -12,7 +12,7 @@ let i = 0;
 
 app.on('ready', () => {
   win = new BrowserWindow({
-    title: 'youtube downloader',
+    title: 'Youtube Downloader',
     width: 1000,
     resizable: false,
     webPreferences: {
@@ -41,19 +41,20 @@ ipcMain.on('url:search', (event, url) => {
       const title = info.videoDetails.title;
       const time_length = secondsToHms(info.videoDetails.lengthSeconds);
       const mp4_audio_format = ytdl.chooseFormat(info.formats, {
-        filter: format => format.container === 'mp4' && !format.hasAudio,
+        filter: format => format.container === 'mp4' && !format.hasVideo,
       });
       const mp4_videoonly_formats = ytdl.filterFormats(info.formats,
         format => format.container === 'mp4' && !format.hasAudio);
       const qualityLabel = _.map(mp4_videoonly_formats, 'qualityLabel');
-      let video_bitrate = _.map(mp4_videoonly_formats, 'bitrate');
-      const audio_bitrate = mp4_audio_format.bitrate;
-      video_bitrate = _.map(video_bitrate, (bitrate) => {
-        return bitrate + audio_bitrate;
-      })
+      let video_length = _.map(mp4_videoonly_formats, 'contentLength');
+      const audio_length = mp4_audio_format.contentLength;
+      video_length = _.map(video_length, (length) => {
+        return ((Number(length) + Number(audio_length))/ 1024 / 1024).toFixed(1);
+      });
+      const codecs = _.map(mp4_videoonly_formats, 'codecs');
       let quality_text = [];
-      for (let i = 0; i < video_bitrate.length; i++) {
-        quality_text.push(qualityLabel[i] + '  ' + (video_bitrate[i] / 1024 / 1024).toFixed(2) + 'MB');
+      for (let i = 0; i < video_length.length; i++) {
+        quality_text.push(qualityLabel[i] + ' ' + video_length[i]  + 'MB' + ' ' + codecs[i]);
       }
       const video_info = {
         url: url,
@@ -63,11 +64,10 @@ ipcMain.on('url:search', (event, url) => {
         quality_text: quality_text,
         qualityLabel: qualityLabel
       }
-      win.webContents.send('info:get', video_info);
+      win.webContents.send('info:get', video_info, null);
     })
     .on('error', (e) => {
-      dialog.showErrorBox(e.name, e.message);
-      win.webContents.send('info:get', null);
+      win.webContents.send('info:get', null, e.message);
     })
 });
 

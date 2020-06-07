@@ -32,19 +32,30 @@ const addListHtml = (id) => {
 }
 
 // ボタン＿検索(promiseは最初だけ面倒であとはチェーンで返り値を自動的にpromiseでラッパする)
-document.querySelector('#btn_search_url').addEventListener('click', (e) => {
-  // URL有りなし ＞ htmlを追加 ＞ URLを検索 ＞ itemに反映
+const btn_search = document.querySelector('#btn_search_url');
+const loading_el = document.querySelector('#loading');
+btn_search.addEventListener('click', (e) => {
+  // URL確認 ＞ htmlを追加 ＞ URLを検索 ＞ itemに反映
+  btn_search.disabled = true;
+  loading_el.classList.remove('d-none');
+
   let url = input_text_url.value;
   ipcRenderer.send('url:search', url);
-  ipcRenderer.once('info:get', (event, video_info) => {
-    if (video_info) {
+  ipcRenderer.once('info:get', (event, video_info, err) => {
+    if (!err) {
       addListHtml('item_downloader' + i)
         .then(() => {
           let item = new Downloader('item_downloader' + i);
           list_downloader.push(item);
           list_downloader[i].setValue(video_info)
           i += 1;
+          btn_search.disabled = false;
+          loading_el.classList.add('d-none');
         });
+    } else {
+      btn_search.disabled = false;
+      loading_el.classList.add('d-none');
+      alert(err)
     }
   });
 });
