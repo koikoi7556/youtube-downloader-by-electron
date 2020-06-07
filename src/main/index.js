@@ -23,6 +23,9 @@ app.on('ready', () => {
   win.loadURL(path.resolve(__dirname, '../../app/index.html'));
 });
 
+// // 初期設定しようとおもったがwebContentsがない
+// win.webContents.send('config:submit', app.getPath('videos'));
+
 // ボタン＿検索
 ipcMain.on('url:search', (event, url) => {
   ytdl(url)
@@ -55,6 +58,7 @@ ipcMain.on('url:search', (event, url) => {
         quality_text: quality_text,
         itag: itag,
         contentLength: video_length,
+        folder_path: app.getPath('videos'),
       }
       win.webContents.send('info:get', video_info, null);
     })

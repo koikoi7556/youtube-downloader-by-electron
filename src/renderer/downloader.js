@@ -60,6 +60,7 @@ class Downloader {
     this.time_length.innerText = video_info.time_length;
     this.itag = video_info.itag;
     this.contentLength = video_info.contentLength;
+    this.input_text_folder.value = video_info.folder_path;
     setSelectOptions(this.quality, video_info.quality_text, video_info.itag);
   }
 

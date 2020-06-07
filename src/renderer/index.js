@@ -3,9 +3,6 @@ require('bootstrap');
 require('bootstrap/dist/css/bootstrap.min.css');
 const Downloader = require('./downloader');
 
-let list_downloader = [];
-let i = 0;
-
 // テキスト＿検索URL
 const input_text_url = document.querySelector('#input_text_url');
 input_text_url.addEventListener('focus', function (event) {
@@ -32,6 +29,8 @@ const addListHtml = (id) => {
 }
 
 // ボタン＿検索(promiseは最初だけ面倒であとはチェーンで返り値を自動的にpromiseでラッパする)
+let list_downloader = [];
+let i = 0;
 const btn_search = document.querySelector('#btn_search_url');
 const loading_el = document.querySelector('#loading');
 btn_search.addEventListener('click', (e) => {
