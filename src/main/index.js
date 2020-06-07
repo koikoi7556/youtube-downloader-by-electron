@@ -1,7 +1,6 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
-const reqp = require('request-promise-native');
 const _ = require('lodash');
 const fs = require('fs');
 const open = require('open');
@@ -17,10 +16,10 @@ app.on('ready', () => {
     webPreferences: {
       backgroundThrottling: false,
       preload: path.join(__dirname, 'preload.js'),
-      devTools: false,
+      // devTools: false,
     }
   });
-  win.removeMenu();
+  // win.removeMenu();
   win.loadURL(path.resolve(__dirname, '../../app/index.html'));
 });
 
@@ -84,7 +83,8 @@ ipcMain.on('folder:save', (event) => {
 
 // ボタン＿ダウンロード開始
 ipcMain.on('download:start', (event, id, video_config) => {
-  const audioOutput = 'sound' + id + '.mp4';
+  const audioOutput = path.resolve(app.getPath('temp'), 'sound' + id + '.mp4');
+  console.log(audioOutput);
   let mainOutput;
 
   const onProgress = (chunkLength, downloaded, total) => {
@@ -143,7 +143,6 @@ ipcMain.on('download:start', (event, id, video_config) => {
 
 // ボタン＿フォルダを開く
 ipcMain.on('folder:open', (event, folder_path) => {
-  folder_path = folder_path;
   (async () => {
     await open(folder_path);
   })();

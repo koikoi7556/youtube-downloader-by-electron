@@ -110,7 +110,7 @@ class Downloader {
       this.downloaded.innerText = 'Done!';
       this.downloadbar.classList.remove('progress-bar-striped');
     this.el.querySelector('.close').disabled = false;
-      ipcRenderer.removeAllListener('download:progress' + this.id);
+      ipcRenderer.removeAllListeners('download:progress' + this.id);
     });
   }
 

@@ -58,3 +58,9 @@ btn_search.addEventListener('click', (e) => {
     }
   });
 });
+
+// リンクを外部ブラウザで開く
+document.querySelector('#profile').addEventListener('click', function(e) {
+  e.preventDefault();
+  openExternal(this.href);
+})
