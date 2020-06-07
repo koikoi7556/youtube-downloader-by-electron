@@ -35,38 +35,43 @@ const videoInfo = {
 
 // ボタン＿検索
 ipcMain.on('url:search', (event, url) => {
-  ytdl.getInfo(url).then(info => {
-    const thumbnail = info.videoDetails.thumbnail.thumbnails[0].url;
-    const title = info.videoDetails.title;
-    const time_length = secondsToHms(info.videoDetails.lengthSeconds);
-    const mp4_audio_format = ytdl.chooseFormat(info.formats, {
-      filter: format => format.container === 'mp4' && !format.hasAudio,
-    });
-    const mp4_videoonly_formats = ytdl.filterFormats(info.formats,
-      format => format.container === 'mp4' && !format.hasAudio);
-    const qualityLabel = _.map(mp4_videoonly_formats, 'qualityLabel');
-    let video_bitrate = _.map(mp4_videoonly_formats, 'bitrate');
-    let audio_bitrate = mp4_audio_format.bitrate;
-    video_bitrate = _.map(video_bitrate, (bitrate) => {
-      return bitrate + audio_bitrate;
+  ytdl(url)
+    .on('info', (info) => {
+      const thumbnail = info.videoDetails.thumbnail.thumbnails[0].url;
+      const title = info.videoDetails.title;
+      const time_length = secondsToHms(info.videoDetails.lengthSeconds);
+      const mp4_audio_format = ytdl.chooseFormat(info.formats, {
+        filter: format => format.container === 'mp4' && !format.hasAudio,
+      });
+      const mp4_videoonly_formats = ytdl.filterFormats(info.formats,
+        format => format.container === 'mp4' && !format.hasAudio);
+      const qualityLabel = _.map(mp4_videoonly_formats, 'qualityLabel');
+      let video_bitrate = _.map(mp4_videoonly_formats, 'bitrate');
+      const audio_bitrate = mp4_audio_format.bitrate;
+      video_bitrate = _.map(video_bitrate, (bitrate) => {
+        return bitrate + audio_bitrate;
+      })
+      let quality_text = [];
+      for (let i = 0; i < video_bitrate.length; i++) {
+        quality_text.push(qualityLabel[i] + '  ' + (video_bitrate[i] / 1024 / 1024).toFixed(2) + 'MB');
+      }
+      const video_info = {
+        url: url,
+        thumbnail: thumbnail,
+        title: title,
+        time_length: time_length,
+        quality_text: quality_text,
+        qualityLabel: qualityLabel
+      }
+      win.webContents.send('info:get', video_info);
     })
-    let quality_text = [];
-    for (let i = 0; i < video_bitrate.length; i++) {
-      quality_text.push(qualityLabel[i] + '  ' + (video_bitrate[i] / 1024 / 1024).toFixed(2) + 'MB');
-    }
-    const video_info = {
-      url: url,
-      thumbnail: thumbnail,
-      title: title,
-      time_length: time_length,
-      quality_text: quality_text,
-      qualityLabel: qualityLabel
-    }
-    win.webContents.send('info:get', video_info);
-  });
+    .on('error', (e) => {
+      dialog.showErrorBox(e.name, e.message);
+      win.webContents.send('info:get', null);
+    })
 });
 
-// urlから連想配列でビデオの詳細を返す
+// urlから連想配列でビデオの詳細を返す関数の予定だったが，非同期処理で返り値が戻らない．許すまじ．
 const getVideoInfo = (url) => {
   let video_info;
 

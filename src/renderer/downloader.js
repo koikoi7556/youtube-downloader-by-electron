@@ -2,6 +2,8 @@ class Downloader {
   constructor(id) {
     // console.log(id + ':' + webFrame.routingId)
     this.id = id;
+
+    
     this.el = document.querySelector('#' + this.id);
     // テキスト＿URL
     this.url = this.el.querySelector('.item_url');
