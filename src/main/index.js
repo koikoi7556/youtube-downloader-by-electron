@@ -17,7 +17,7 @@ app.on('ready', () => {
     webPreferences: {
       backgroundThrottling: false,
       preload: path.join(__dirname, 'preload.js'),
-      // devTools: false,
+      devTools: false,
     }
   });
   win.removeMenu();
@@ -48,9 +48,15 @@ ipcMain.on('url:search', (event, url) => {
       const codecs = _.map(mp4_videoonly_formats, 'codecs');
       let quality_text = [];
       for (let i = 0; i < video_length.length; i++) {
-        quality_text.push(qualityLabel[i] + ' ' + (video_length[i] /1024 /1024).toFixed(1) + 'MB' + ' ' + codecs[i]);
+        quality_text.push(qualityLabel[i] + ' ' + (video_length[i] / 1024 / 1024).toFixed(1) + 'MB' + ' ' + codecs[i]);
       }
-      const itag = _.map(mp4_videoonly_formats, 'itag');
+      let itag = _.map(mp4_videoonly_formats, 'itag');
+
+      // AUDOフォーマットを配列に追加
+      quality_text.push('MP3' + ' ' + (mp4_audio_format.contentLength / 1024 / 1024).toFixed(1) + 'MB' + ' AUDIOONLY');
+      itag.push(mp4_audio_format.itag);
+      video_length.push(mp4_audio_format.contentLength);
+
       const video_info = {
         url: url,
         thumbnail: thumbnail,
@@ -79,43 +85,59 @@ ipcMain.on('folder:save', (event) => {
 // ボタン＿ダウンロード開始
 ipcMain.on('download:start', (event, id, video_config) => {
   const audioOutput = 'sound' + id + '.mp4';
-  const mainOutput = path.resolve(video_config.folder_path, video_config.title + '.mp4');
-  let audio_downloaded;
+  let mainOutput;
 
   const onProgress = (chunkLength, downloaded, total) => {
     win.webContents.send('download:progress' + id, chunkLength);
   }
 
-  ytdl(video_config.url, {
-    filter: format => format.container === 'mp4' && !format.hasVideo,
-  }).on('error', console.error)
-    .on('info', (info, format) => {
-      audio_downloaded = Number(format.contentLength);
-    }) 
-    .on('progress', onProgress)
-    .pipe(fs.createWriteStream(audioOutput))
-    .on('finish', () => {
-      console.log('\ndownloading video');
-      const video = ytdl(video_config.url, {
-        quality: video_config.itag
+  // AUDIOONLYのときMP3を出力して終了
+  if (video_config.itag === '140') {
+    mainOutput = path.resolve(video_config.folder_path, video_config.title + '.mp3');
+    console.log('AUDIOONLY')
+    ytdl(video_config.url, {
+      filter: format => format.container === 'mp4' && !format.hasVideo,
+    }).on('error', console.error)
+      .on('progress', onProgress)
+      .pipe(fs.createWriteStream(mainOutput))
+      .on('finish', () => {
+        console.log('finished downloading, saved to' + mainOutput);
+        win.webContents.send('download:end')
       });
-      video.on('progress', onProgress);
-      // ffmpegの入力では，一度に一つのstreamしか受け取れない
-      ffmpeg()
-        .input(video)
-        .videoCodec('copy')
-        .input(audioOutput)
-        .audioCodec('copy')
-        .save(mainOutput)
-        .on('error', console.error)
-        .on('end', () => {
-          fs.unlink(audioOutput, err => {
-            if (err) console.error(err);
-            else console.log(`\nfinished downloading, saved to ${mainOutput}`);
-          });
-          win.webContents.send('download:end')
+  } 
+  
+  // AUDIOとVIDEOをそれぞれダウンロードして結合し，保存．
+  else {
+    mainOutput = path.resolve(video_config.folder_path, video_config.title + '.mp4');
+    ytdl(video_config.url, {
+      filter: format => format.container === 'mp4' && !format.hasVideo,
+    }).on('error', console.error)
+      .on('progress', onProgress)
+      .pipe(fs.createWriteStream(audioOutput))
+      .on('finish', () => {
+        console.log('\ndownloading video');
+        const video = ytdl(video_config.url, {
+          quality: video_config.itag
         });
-    });
+        video.on('progress', onProgress);
+        // ffmpegの入力では，一度に一つのstreamしか受け取れない
+        ffmpeg()
+          .input(video)
+          .videoCodec('copy')
+          .input(audioOutput)
+          .audioCodec('copy')
+          .save(mainOutput)
+          .on('error', console.error)
+          .on('end', () => {
+            fs.unlink(audioOutput, err => {
+              if (err) console.error(err);
+              else console.log(`\nfinished downloading, saved to ${mainOutput}`);
+            });
+            win.webContents.send('download:end')
+          });
+      });
+  }
+
 });
 
 
@@ -127,6 +149,8 @@ ipcMain.on('folder:open', (event, folder_path) => {
   })();
 });
 
+
+// ヘルパー関数類
 // seconds to hours, minutes, seconds.
 const secondsToHms = (d) => {
   d = Number(d);

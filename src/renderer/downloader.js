@@ -84,6 +84,7 @@ class Downloader {
     this.el.querySelector('.btn-start-download').classList.add('d-none');
     this.el.querySelector('.btn-open-folder').classList.remove('d-none');
     this.el.querySelector('.item-progress').classList.remove('d-none');
+    this.el.querySelector('.close').disabled = true;
     this.el.querySelector('.item-config .btn-saved-folder').disabled = true;
     this.quality.disabled = true;
 
@@ -108,6 +109,7 @@ class Downloader {
     ipcRenderer.once('download:end', (event) => {
       this.downloaded.innerText = 'Done!';
       this.downloadbar.classList.remove('progress-bar-striped');
+    this.el.querySelector('.close').disabled = false;
       ipcRenderer.removeAllListener('download:progress' + this.id);
     });
   }
