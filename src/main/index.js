@@ -23,16 +23,6 @@ app.on('ready', () => {
   win.loadURL(path.resolve(__dirname, '../../app/index.html'));
 });
 
-const videoInfo = {
-  url: ',asdfa',
-  thumbnail: '../sample.png',
-  title: 'NewTtiel',
-  time_length: '212313h',
-  file_size: '10 mb',
-  quality: ['10', '123', '1235 ', '1235 ']
-}
-
-
 // ボタン＿検索
 ipcMain.on('url:search', (event, url) => {
   ytdl(url)
@@ -49,20 +39,22 @@ ipcMain.on('url:search', (event, url) => {
       let video_length = _.map(mp4_videoonly_formats, 'contentLength');
       const audio_length = mp4_audio_format.contentLength;
       video_length = _.map(video_length, (length) => {
-        return ((Number(length) + Number(audio_length))/ 1024 / 1024).toFixed(1);
+        return Number(length) + Number(audio_length);
       });
       const codecs = _.map(mp4_videoonly_formats, 'codecs');
       let quality_text = [];
       for (let i = 0; i < video_length.length; i++) {
-        quality_text.push(qualityLabel[i] + ' ' + video_length[i]  + 'MB' + ' ' + codecs[i]);
+        quality_text.push(qualityLabel[i] + ' ' + (video_length[i] /1024 /1024).toFixed(1) + 'MB' + ' ' + codecs[i]);
       }
+      const itag = _.map(mp4_videoonly_formats, 'itag');
       const video_info = {
         url: url,
         thumbnail: thumbnail,
         title: title,
         time_length: time_length,
         quality_text: quality_text,
-        qualityLabel: qualityLabel
+        itag: itag,
+        contentLength: video_length,
       }
       win.webContents.send('info:get', video_info, null);
     })
@@ -70,12 +62,6 @@ ipcMain.on('url:search', (event, url) => {
       win.webContents.send('info:get', null, e.message);
     })
 });
-
-// urlから連想配列でビデオの詳細を返す関数の予定だったが，非同期処理で返り値が戻らない．許すまじ．
-const getVideoInfo = (url) => {
-  let video_info;
-
-}
 
 // ボタン＿保存フォルダ選択
 ipcMain.on('folder:save', (event) => {
@@ -86,16 +72,51 @@ ipcMain.on('folder:save', (event) => {
 });
 
 // ボタン＿ダウンロード開始
-ipcMain.on('download:start', (event, id, folder_path) => {
-  const audioOutput = path.resolve(__dirname, 'sound.mp4');
+ipcMain.on('download:start', (event, id, video_config) => {
+  const audioOutput = 'sound' + id + '.mp4';
+  const mainOutput = path.resolve(video_config.folder_path, video_config.title + '.mp4');
+  let audio_downloaded;
 
-  win.webContents.send('download:progress' + id, downloaded, total);
-  win.webContents.send('download:end' + id);
+  const onProgress = (chunkLength, downloaded, total) => {
+    win.webContents.send('download:progress' + id, chunkLength);
+  }
+
+  ytdl(video_config.url, {
+    filter: format => format.container === 'mp4' && !format.hasVideo,
+  }).on('error', console.error)
+    .on('info', (info, format) => {
+      audio_downloaded = Number(format.contentLength);
+    }) 
+    .on('progress', onProgress)
+    .pipe(fs.createWriteStream(audioOutput))
+    .on('finish', () => {
+      console.log('\ndownloading video');
+      const video = ytdl(video_config.url, {
+        quality: video_config.itag
+      });
+      video.on('progress', onProgress);
+      // ffmpegの入力では，一度に一つのstreamしか受け取れない
+      ffmpeg()
+        .input(video)
+        .videoCodec('copy')
+        .input(audioOutput)
+        .audioCodec('copy')
+        .save(mainOutput)
+        .on('error', console.error)
+        .on('end', () => {
+          fs.unlink(audioOutput, err => {
+            if (err) console.error(err);
+            else console.log(`\nfinished downloading, saved to ${mainOutput}`);
+          });
+          win.webContents.send('download:end')
+        });
+    });
 });
+
 
 // ボタン＿フォルダを開く
 ipcMain.on('folder:open', (event, folder_path) => {
-  folder_path = path.resolve(__dirname, folder_path);
+  folder_path = folder_path;
   (async () => {
     await open(folder_path);
   })();

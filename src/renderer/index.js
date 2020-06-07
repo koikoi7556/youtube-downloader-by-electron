@@ -21,8 +21,8 @@ const addListHtml = (id) => {
         const item = document.createElement('div');
         item.id = id;
         item.innerHTML = myXml.responseText;
-        document.getElementById("list").appendChild(item);
-
+        document.getElementById("list").insertAdjacentElement('afterbegin', item);
+        
         resolve();
       }
     }

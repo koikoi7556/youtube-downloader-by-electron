@@ -2,7 +2,6 @@ class Downloader {
   constructor(id) {
     // console.log(id + ':' + webFrame.routingId)
     this.id = id;
-
     
     this.el = document.querySelector('#' + this.id);
     // テキスト＿URL
@@ -13,7 +12,6 @@ class Downloader {
 
     // セレクタ＿画質
     this.quality = this.el.querySelector('.input-select-quality');
-    console.log(this.quality)
     // 画像＿サムネイル画像
     this.thumbnail = this.el.querySelector('.item-thumbnail img');
 
@@ -22,7 +20,10 @@ class Downloader {
     this.time_length = this.el.querySelectorAll('.item-video small')[0];
 
     // テキスト＿ダウンロード済み
-    this.downloaded = this.el.querySelector('.item-progress small')
+    this.downloaded = this.el.querySelector('.txt-download');
+
+    // ブロック＿ダウンロード プログレスバー
+    this.downloadbar = this.el.querySelector('.item-progress .progress-bar');
 
     // ボタン＿保存フォルダ選択
     this.el.querySelector('.item-config .btn-saved-folder').addEventListener('click', (e) => {
@@ -39,21 +40,27 @@ class Downloader {
       this.onOpenFolder();
     });
 
+    // itag, 動画容量 配列
+    this.itag;
+    this.contentLength;
   }
 
-  searchVideo(url) {
-    ipcRenderer.send('url:search', url);
-    ipcRenderer.once('info:get', (event, video_info) => {
-      this.setValue(video_info);
-    });
-  }
+  // 使用しない
+  // searchVideo(url) {
+  //   ipcRenderer.send('url:search', url);
+  //   ipcRenderer.once('info:get', (event, video_info) => {
+  //     this.setValue(video_info);
+  //   });
+  // }
 
   setValue(video_info) {
     this.url.innerText = video_info.url;
     this.thumbnail.src = video_info.thumbnail;
     this.title.innerText = video_info.title;
     this.time_length.innerText = video_info.time_length;
-    setSelectOptions(this.quality, video_info.quality_text, video_info.qualityLabel);
+    this.itag = video_info.itag;
+    this.contentLength = video_info.contentLength;
+    setSelectOptions(this.quality, video_info.quality_text, video_info.itag);
   }
 
   onSavedFolder() {
@@ -65,28 +72,41 @@ class Downloader {
     });
   }
 
-  // 要素を入れ替えてダウンロード開始
+  // 要素入れ替え ＞ ダウンロード開始
   onStartDownload() {
     this.el.querySelector('.btn-start-download').classList.add('d-none');
     this.el.querySelector('.btn-open-folder').classList.remove('d-none');
     this.el.querySelector('.item-progress').classList.remove('d-none');
+    this.el.querySelector('.item-config .btn-saved-folder').disabled = true;
+    this.quality.disabled = true;
 
-    // const video_config = 
-    // ipcRenderer.send('download:start', this.id, this.input_text_folder.value)
-    // ipcRenderer.on('download:progress' + this.id, (event, downloaded, total) => {
-    //   const percent = downloaded / total;
-    //   this.downloaded.innerText = `(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)`
-    // });
-    // ipcRenderer.once('download:end', (event) => {
-    //   ipcRenderer.removeAllLitener('download:progress' + this.id);
+    const video_config = {
+      url: this.url.innerText,
+      title: this.title.innerText,
+      itag: this.quality.value,
+      folder_path: this.input_text_folder.value,
+    };
+    const itag_index = this.itag.findIndex(item => item === Number(this.quality.value))
+    const total = this.contentLength[itag_index];
+    let downloaded = 0;
 
-    // });
+    ipcRenderer.send('download:start', this.id, video_config);
+    ipcRenderer.on('download:progress' + this.id, (event, chunkLength) => {
+      downloaded += chunkLength;
+      const percent = downloaded / total;
+      this.downloaded.innerText = `${(downloaded / 1024 / 1024).toFixed(1)}MB of ${(total /1024 /1024).toFixed(1)}MB`
+      this.downloadbar.style.width = percent*100 + '%';
+    });
+    ipcRenderer.once('download:end', (event) => {
+      this.downloaded.innerText = 'Done!';
+      this.downloadbar.classList.remove('progress-bar-striped');
+      ipcRenderer.removeAllListener('download:progress' + this.id);
+    });
   }
 
   onOpenFolder() { 
     ipcRenderer.send('folder:open', this.input_text_folder.value);
   }
-
 }
 
 // select要素に複数オプションを追加
@@ -96,7 +116,6 @@ const setSelectOptions = (select_el, texts, values) => {
     option_el.text = texts[i];
     option_el.value = values[i];
     select_el.appendChild(option_el);
-
   }
 }
 
