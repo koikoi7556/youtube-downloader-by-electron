@@ -8,7 +8,6 @@ const open = require('open');
 const path = require('path');
 
 let win;
-let i = 0;
 
 app.on('ready', () => {
   win = new BrowserWindow({
@@ -18,8 +17,10 @@ app.on('ready', () => {
     webPreferences: {
       backgroundThrottling: false,
       preload: path.join(__dirname, 'preload.js'),
+      // devTools: false,
     }
   });
+  win.removeMenu();
   win.loadURL(path.resolve(__dirname, '../../app/index.html'));
 });
 

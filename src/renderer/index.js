@@ -9,7 +9,7 @@ input_text_url.addEventListener('focus', function (event) {
   this.select();
 });
 
-// サーバーのHTMLファイルを取得する同期処理
+// サーバーのHTMLファイルを取得し，追加する同期処理
 const addListHtml = (id) => {
   return new Promise((resolve) => {
     const myXml = new XMLHttpRequest();
@@ -34,13 +34,13 @@ let i = 0;
 const btn_search = document.querySelector('#btn_search_url');
 const loading_el = document.querySelector('#loading');
 btn_search.addEventListener('click', (e) => {
-  // URL確認 ＞ htmlを追加 ＞ URLを検索 ＞ itemに反映
   btn_search.disabled = true;
   loading_el.classList.remove('d-none');
 
   let url = input_text_url.value;
   ipcRenderer.send('url:search', url);
   ipcRenderer.once('info:get', (event, video_info, err) => {
+    // URL確認後エラーがなければ，Downloaderをリストに追加
     if (!err) {
       addListHtml('item_downloader' + i)
         .then(() => {

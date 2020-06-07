@@ -2,7 +2,7 @@ class Downloader {
   constructor(id) {
     // console.log(id + ':' + webFrame.routingId)
     this.id = id;
-    
+
     this.el = document.querySelector('#' + this.id);
     // テキスト＿URL
     this.url = this.el.querySelector('.item_url');
@@ -40,6 +40,11 @@ class Downloader {
       this.onOpenFolder();
     });
 
+    // ボタン＿ダウンローダー削除
+    this.el.querySelector('.close').addEventListener('click', (e) => {
+      this.onDelete();
+    });
+
     // itag, 動画容量 配列
     this.itag;
     this.contentLength;
@@ -53,6 +58,7 @@ class Downloader {
   //   });
   // }
 
+  // プロパティを一括設定
   setValue(video_info) {
     this.url.innerText = video_info.url;
     this.thumbnail.src = video_info.thumbnail;
@@ -73,7 +79,7 @@ class Downloader {
     });
   }
 
-  // 要素入れ替え ＞ ダウンロード開始
+  // 要素入れ替え，非表示 ＞ ダウンロード開始
   onStartDownload() {
     this.el.querySelector('.btn-start-download').classList.add('d-none');
     this.el.querySelector('.btn-open-folder').classList.remove('d-none');
@@ -92,11 +98,12 @@ class Downloader {
     let downloaded = 0;
 
     ipcRenderer.send('download:start', this.id, video_config);
+    // ダウンロード状況を逐次受け取り，加工後に表示．
     ipcRenderer.on('download:progress' + this.id, (event, chunkLength) => {
       downloaded += chunkLength;
       const percent = downloaded / total;
-      this.downloaded.innerText = `${(downloaded / 1024 / 1024).toFixed(1)}MB of ${(total /1024 /1024).toFixed(1)}MB`
-      this.downloadbar.style.width = percent*100 + '%';
+      this.downloaded.innerText = `${(downloaded / 1024 / 1024).toFixed(1)}MB of ${(total / 1024 / 1024).toFixed(1)}MB`
+      this.downloadbar.style.width = percent * 100 + '%';
     });
     ipcRenderer.once('download:end', (event) => {
       this.downloaded.innerText = 'Done!';
@@ -105,11 +112,16 @@ class Downloader {
     });
   }
 
-  onOpenFolder() { 
+  onOpenFolder() {
     ipcRenderer.send('folder:open', this.input_text_folder.value);
+  }
+
+  onDelete() {
+    this.el.remove();
   }
 }
 
+// ヘルパー関数類
 // select要素に複数オプションを追加
 const setSelectOptions = (select_el, texts, values) => {
   for (let i = 0; i < texts.length; i++) {
