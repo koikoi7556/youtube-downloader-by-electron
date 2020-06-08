@@ -16,10 +16,10 @@ app.on('ready', () => {
     webPreferences: {
       backgroundThrottling: false,
       preload: path.join(__dirname, 'preload.js'),
-      // devTools: false,
+      devTools: false,
     }
   });
-  // win.removeMenu();
+  win.removeMenu();
   win.loadURL(path.resolve(__dirname, '../../app/index.html'));
 });
 

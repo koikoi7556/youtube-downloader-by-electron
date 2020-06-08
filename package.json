@@ -1,7 +1,7 @@
 {
-  "name": "YoutubeDownloder",
+  "name": "youtube-downloader-by-electron",
   "version": "1.0.0",
-  "description": "Youtubeの動画をDLできるGUIソフト",
+  "description": "Youtube Downloader",
   "main": "src/main/index.js",
   "scripts": {
     "electron": "electron .",
@@ -40,7 +40,8 @@
     "ytdl-core": "^3.1.0"
   },
   "build": {
-    "appId": "com.electron.yourapp",
+    "appId": "com.electron.ytdl",
+    "productName": "YoutubeDownloader",
     "directories": {
       "output": "dist"
     },
@@ -51,7 +52,7 @@
     ],
     "win": {
       "icon": "resources/icon.ico",
-      "target": "portable"
+      "target": "nsis"
     },
     "nsis": {
       "oneClick": false,
