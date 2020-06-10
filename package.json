@@ -43,16 +43,17 @@
     "appId": "com.electron.ytdl",
     "productName": "YoutubeDownloader",
     "directories": {
+      "buildResources": "resources",
       "output": "dist"
     },
     "files": [
-      "src/main/*",
+      "src/main",
       "app",
-      "package.json"
+      "resources"
     ],
     "win": {
-      "icon": "resources/icon.ico",
-      "target": "nsis"
+      "icon": "resources/icons/icon.ico",
+      "target": "zip"
     },
     "nsis": {
       "oneClick": false,

@@ -13,6 +13,7 @@ app.on('ready', () => {
     title: 'Youtube Downloader',
     width: 1000,
     resizable: false,
+    icon: path.resolve(__dirname, '../../resources/icons/icon.ico'),
     webPreferences: {
       backgroundThrottling: false,
       preload: path.join(__dirname, 'preload.js'),
